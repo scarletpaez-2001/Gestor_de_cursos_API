@@ -3,7 +3,7 @@ import "./App.css";
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
 import CourseList from "./components/CourseList";
-import { getCourses } from "./services/courseService"; // Puedes usar getCoursesWithFetch para probar el Desafío 4
+import { getCourses } from "./services/courseService"; 
 import { useLocalStorage } from "./hooks/useLocalStorage";
 
 function App() {
@@ -32,7 +32,7 @@ function App() {
     loadCourses();
   }, []);
 
-  // Extraer lista de docentes únicos para el select (Desafío 1)
+  // Extraer lista de docentes únicos para el select del desafío 1
   const availableTeachers = useMemo(() => {
     const ids = courses.map((course) => course.teacherId);
     return [...new Set(ids)].sort((a, b) => a - b);
@@ -59,7 +59,7 @@ function App() {
     setFavorites([...favorites, course]);
   };
 
-  // DESAFÍO 2: Contador de favoritos por Docente
+  // DESAFÍO 2: Contador de favoritos por docente
   const favoritesCountByTeacher = useMemo(() => {
     const counts = {};
     favorites.forEach((fav) => {

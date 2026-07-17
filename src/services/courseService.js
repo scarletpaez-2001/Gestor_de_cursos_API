@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_URL = "https://jsonplaceholder.typicode.com/posts";
 
-// Versión estándar usando Axios (Requisito base)
+// Versión estándar con axios
 export const getCourses = async () => {
   try {
     const response = await axios.get(API_URL);
@@ -10,7 +10,7 @@ export const getCourses = async () => {
       id: item.id,
       title: item.title,
       description: item.body,
-      teacherId: item.userId, // El userId de la API simula nuestro docente
+      teacherId: item.userId, 
     }));
   } catch (error) {
     console.error("Error al obtener los cursos con Axios:", error);
