@@ -1,122 +1,126 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useMemo, useState } from "react";
+import "./App.css";
+import Header from "./components/Header";
+import SearchBar from "./components/SearchBar";
+import CourseList from "./components/CourseList";
+import { getCourses } from "./services/courseService"; // Puedes usar getCoursesWithFetch para probar el Desafío 4
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [courses, setCourses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTeacher, setSelectedTeacher] = useState("");
+  const [favorites, setFavorites] = useLocalStorage("favoriteCourses", []);
+  const [darkMode, setDarkMode] = useLocalStorage("darkModeEnabled", false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getCourses();
+      setCourses(data);
+    } catch (error) {
+      setError(error.message || "Ocurrió un error inesperado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  // Extraer lista de docentes únicos para el select (Desafío 1)
+  const availableTeachers = useMemo(() => {
+    const ids = courses.map((course) => course.teacherId);
+    return [...new Set(ids)].sort((a, b) => a - b);
+  }, [courses]);
+
+  // Filtrar cursos por texto y por ID de docente
+  const filteredCourses = useMemo(() => {
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    return courses.filter((course) => {
+      const matchesSearch = course.title.toLowerCase().includes(normalizedSearch);
+      const matchesTeacher = selectedTeacher === "" || String(course.teacherId) === String(selectedTeacher);
+      return matchesSearch && matchesTeacher;
+    });
+  }, [courses, searchTerm, selectedTeacher]);
+
+  // Manejar favoritos
+  const handleToggleFavorite = (course) => {
+    const exists = favorites.some((fav) => fav.id === course.id);
+    if (exists) {
+      const updatedFavorites = favorites.filter((fav) => fav.id !== course.id);
+      setFavorites(updatedFavorites);
+      return;
+    }
+    setFavorites([...favorites, course]);
+  };
+
+  // DESAFÍO 2: Contador de favoritos por Docente
+  const favoritesCountByTeacher = useMemo(() => {
+    const counts = {};
+    favorites.forEach((fav) => {
+      counts[fav.teacherId] = (counts[fav.teacherId] || 0) + 1;
+    });
+    return counts;
+  }, [favorites]);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className={darkMode ? "dark-theme" : "light-theme"}>
+      <main className="app">
+        <Header darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
 
-      <div className="ticks"></div>
+        <section className="summary">
+          <p>Total de cursos cargados: {courses.length}</p>
+          <p>Tus favoritos: {favorites.length}</p>
+        </section>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Panel informativo del Desafío 2 */}
+        {favorites.length > 0 && (
+          <section className="summary favorite-stats">
+            <h4>Favoritos por Docente:</h4>
+            <div className="stats-grid">
+              {Object.entries(favoritesCountByTeacher).map(([teacherId, count]) => (
+                <span key={teacherId} className="stat-tag">
+                  Docente {teacherId}: {count} ★
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          teacherId={selectedTeacher}
+          onTeacherChange={setSelectedTeacher}
+          availableTeachers={availableTeachers}
+        />
+
+        {loading && <p className="message">Cargando cursos desde la API...</p>}
+        
+        {error && (
+          <div className="error">
+            <p>{error}</p>
+            <button type="button" onClick={loadCourses}>
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <CourseList
+            courses={filteredCourses}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+          />
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
